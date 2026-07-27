@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>老同学访谈 · 灵签</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#fef6fb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#d4a843;--gold-l:#f0d68a;--gold-d:#b88930;
+  --red:#d44040;--red-l:#ff6b6b;--red-d:#8b2020;
+  --sakura:#ffb7c5;
+  --bg-card:rgba(20,12,30,.75);--bg-hover:rgba(30,20,45,.85);
+  --text:#f0e8f8;--dim:#9a8aaa;--bright:#fff;
+  --radius:16px;--shadow:0 8px 40px rgba(0,0,0,.5);
+  --ease:.3s cubic-bezier(.4,0,.2,1);
+  --accent:var(--gold);--accent-l:var(--gold-l);--accent-d:var(--gold-d);
+  --glow-c:rgba(212,168,67,.1);
+}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans SC','Noto Sans JP',sans-serif;
+  background:
+    radial-gradient(ellipse at 75% 20%, rgba(255,200,160,.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 80%, rgba(200,180,255,.08) 0%, transparent 40%),
+    linear-gradient(175deg, #fef6fb 0%, #fce4ec 35%, #f0dce8 55%, #dce8f5 85%, #c8dcef 100%);
+  color:var(--text);display:flex;flex-direction:column;align-items:center;
+  min-height:100dvh;overflow:hidden;-webkit-font-smoothing:antialiased;position:relative;
+}
+.petal-layer{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.petal{
+  position:absolute;top:-30px;width:14px;height:12px;
+  border-radius:50% 0 50% 30%;opacity:.45;z-index:0;
+  animation:petalFall var(--fall,18s) linear infinite;
+  animation-delay:var(--dl,0s)
+}
+@keyframes petalFall{
+  0%{transform:translateY(-20px)translateX(0)rotate(0deg)scale(1);opacity:.5}
+  25%{transform:translateY(25vh)translateX(var(--dx1,15px))rotate(90deg)scale(1.02);opacity:.5}
+  50%{transform:translateY(50vh)translateX(var(--dx2,-10px))rotate(180deg)scale(.98);opacity:.4}
+  75%{transform:translateY(75vh)translateX(var(--dx3,20px))rotate(270deg)scale(1.01);opacity:.35}
+  100%{transform:translateY(105vh)translateX(var(--dx4,-15px))rotate(360deg)scale(.95);opacity:0}
+}
+#particleCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.container{width:100%;max-width:480px;padding:8px 16px 20px;display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;position:relative;z-index:2}
+.header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:4px 4px 2px;position:relative;z-index:2}
+.header-left{display:flex;align-items:center;gap:10px}
+.logo{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-d));
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:#2a1a30;flex-shrink:0;transition:background .4s;
+}
+.title{font-size:15px;font-weight:700;color:var(--bright);letter-spacing:.3px;text-shadow:0 1px 4px rgba(0,0,0,.3)}
+.title span{color:var(--accent);transition:color .4s}
+
+/* ── Mode Tabs ── */
+.mode-tabs{
+  display:flex;gap:4px;padding:3px;border-radius:10px;
+  background:rgba(20,12,30,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.06);margin:0 auto;
+  width:fit-content;position:relative;z-index:2;
+}
+.mode-tab{
+  padding:5px 14px;border-radius:8px;border:none;font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .3s;white-space:nowrap;
+  background:transparent;color:var(--dim);font-family:inherit;
+  -webkit-tap-highlight-color:transparent;user-select:none;
+}
+.mode-tab.active{background:var(--accent);color:#2a1a30;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.mode-tab:not(.active):hover{color:var(--text);background:rgba(255,255,255,.05)}
+
+/* ── Progress ── */
+.progress{
+  font-size:12px;color:var(--dim);background:var(--bg-card);backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  padding:4px 12px;border-radius:20px;white-space:nowrap;
+  border:1px solid rgba(255,255,255,.06);
+}
+.progress strong{color:var(--accent-l);font-weight:600;transition:color .4s}
+
+/* ── Scene ── */
+.scene{perspective:900px;perspective-origin:50% 40%;width:100%;max-width:340px;margin:-6px auto 0;position:relative;display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.ambient-glow{position:absolute;bottom:20%;left:50%;transform:translateX(-50%);width:280px;height:160px;border-radius:50%;background:radial-gradient(ellipse,var(--glow-c) 0%,transparent 70%);pointer-events:none;transition:opacity .6s,transform .6s,background .6s}
+.ambient-glow.active{opacity:2;transform:translateX(-50%)scale(1.4)}
+.bucket-group{transform-style:preserve-3d;transform:rotateX(4deg);transition:transform .1s;position:relative}
+.bucket-rim{width:224px;height:11px;margin:0 auto -1px;position:relative;z-index:4;background:linear-gradient(to right,#8a6a28,var(--accent),var(--accent-l),var(--accent),#8a6a28);border-radius:5px 5px 2px 2px;box-shadow:0 -2px 15px rgba(212,168,67,.1),inset 0 1px 2px rgba(255,255,255,.12);transition:background .4s}
+.bucket{width:210px;height:148px;position:relative;margin:0 auto;overflow:visible;transform-origin:bottom center}
+.bucket-body{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(90deg,transparent 15%,rgba(212,168,67,.05)30%,transparent 50%,rgba(212,168,67,.03)65%,transparent 85%),
+    linear-gradient(170deg,#5a2d22 0%,#4a241b 25%,#552a20 45%,#3d1f18 60%,#2d1612 100%);
+  border-radius:0 0 48% 48%/0 0 26px 26px;border:2px solid rgba(212,168,67,.12);border-top:none;
+  box-shadow:0 12px 40px rgba(0,0,0,.5),inset 0 8px 30px rgba(0,0,0,.45),inset 0 -4px 20px rgba(0,0,0,.15);
+  overflow:hidden;transition:background .4s;
+}
+.bucket-body::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 12px,rgba(0,0,0,.03)12px,rgba(0,0,0,.03)13px)}
+.bucket-body::after{content:'';position:absolute;top:28%;left:-8%;width:116%;height:3px;background:linear-gradient(to right,transparent 5%,rgba(var(--accent-r,.7),.12)20%,rgba(var(--accent-r,.7),.2)50%,rgba(var(--accent-r,.7),.12)80%,transparent 95%)}
+.bucket-band{position:absolute;bottom:10px;left:-4%;width:108%;height:2px;background:linear-gradient(to right,transparent 10%,rgba(212,168,67,.1)30%,rgba(212,168,67,.15)50%,rgba(212,168,67,.1)70%,transparent 90%)}
+.bucket-inner{position:absolute;top:-2px;left:-2px;right:-2px;height:20px;background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent);border-radius:4px 4px 50% 50%/4px 4px 100% 100%;z-index:3}
+.bucket-shadow{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);width:180px;height:20px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.4),transparent)}
+.sticks-container{position:absolute;bottom:12px;left:8px;right:8px;height:100%;z-index:2;pointer-events:none}
+.stick{position:absolute;bottom:0;width:7px;border-radius:4px 4px 1px 1px;transform-origin:bottom center;font-size:6px;font-weight:700;color:rgba(255,255,255,.8);padding-top:2px;display:flex;align-items:flex-start;justify-content:center;transition:opacity .4s;will-change:transform;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.stick-tip{position:absolute;top:0;left:0;right:0;height:35%;border-radius:4px 4px 0 0}
+.stick.shaking{animation:stickShake .12s ease-in-out infinite;animation-delay:var(--dl,0s)}
+@keyframes stickShake{0%,100%{transform:rotate(var(--rot,0deg))}25%{transform:rotate(calc(var(--rot,0deg)+2.5deg))}50%{transform:rotate(calc(var(--rot,0deg)-1.5deg))}75%{transform:rotate(calc(var(--rot,0deg)+2deg))}}
+.stick.launching{animation:stickLaunch .9s cubic-bezier(.22,.68,.3,1.2) forwards;z-index:10}
+@keyframes stickLaunch{0%{transform:rotate(var(--rot,0deg))translateY(0);opacity:1}35%{transform:rotate(calc(var(--rot,0deg)-3deg))translateY(-80px);opacity:1}60%{transform:rotate(calc(var(--rot,0deg)+1.5deg))translateY(-72px);opacity:1}85%{transform:rotate(var(--rot,0deg))translateY(-75px);opacity:1}100%{transform:rotate(var(--rot,0deg))translateY(-72px);opacity:1}}
+.drawn-number{font-size:44px;font-weight:800;color:var(--accent-l);text-align:center;line-height:1;position:relative;z-index:6;opacity:0;transform:scale(.2)translateY(10px);transition:all .5s cubic-bezier(.34,1.56,.64,1);min-height:44px;margin-top:-4px;text-shadow:0 0 30px rgba(212,168,67,.2),0 0 60px rgba(212,168,67,.05)}
+.drawn-number.show{opacity:1;transform:scale(1)translateY(0)}
+.drawn-number .label{display:block;font-size:11px;font-weight:500;color:var(--dim);text-shadow:none;margin-bottom:-2px}
+.bucket-empty-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--dim);font-size:13px;z-index:1;display:none;letter-spacing:2px}
+
+/* ── Question Card ── */
+.question-card{width:100%;padding:16px 20px;border-radius:var(--radius);background:var(--bg-card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(212,168,67,.1);min-height:68px;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;transition:all .5s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 32px rgba(0,0,0,.3);transform:translateY(0);margin-top:2px}
+.question-card.hidden{opacity:0;transform:translateY(12px);pointer-events:none}
+.question-card .q-label{position:absolute;top:7px;left:14px;font-size:10px;color:var(--accent);font-weight:600;letter-spacing:1px;opacity:.5;transition:color .4s}
+.question-card .q-text{font-size:clamp(15px,4vw,19px);line-height:1.6;color:var(--bright);font-weight:500;max-width:100%;padding:8px 0}
+.question-card .q-number{position:absolute;bottom:7px;right:14px;font-size:10px;color:var(--dim)}
+.question-card.reveal{border-color:var(--accent);box-shadow:0 0 40px var(--glow-c),0 8px 32px rgba(0,0,0,.3);border-color:rgba(212,168,67,.2)}
+@keyframes cardGlow{
+  from{box-shadow:0 0 20px var(--glow-c),0 8px 32px rgba(0,0,0,.3)}
+  to{box-shadow:0 0 50px var(--glow-c),0 8px 32px rgba(0,0,0,.3)}
+}
+.question-card.reveal{animation:cardGlow 2.5s ease-in-out infinite alternate}
+
+/* ── Buttons ── */
+.btn-row{width:100%;display:flex;gap:10px;margin-top:4px;position:relative;z-index:2}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 22px;border-radius:12px;border:none;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;user-select:none;position:relative;overflow:hidden}
+.btn:active{transform:scale(.96)}
+.btn::after{content:'';position:absolute;inset:0;border-radius:inherit;opacity:0;transition:opacity .3s;background:linear-gradient(135deg,rgba(255,255,255,.08),transparent)}
+.btn:hover::after{opacity:1}
+.btn-draw{flex:1;background:linear-gradient(135deg,var(--accent),var(--accent-d));color:#2a1a30;font-size:17px;font-weight:700;box-shadow:0 4px 24px var(--glow-c);transition:all .2s,background .4s}
+.btn-draw:hover{box-shadow:0 6px 32px var(--glow-c)}
+.btn-draw:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-draw .btn-text,.btn-draw .btn-icon{position:relative;z-index:1}
+.btn-secondary{background:var(--bg-card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--text);border:1px solid rgba(255,255,255,.05);padding:12px 16px}
+.btn-secondary:hover{background:var(--bg-hover);border-color:rgba(255,255,255,.08)}
+
+/* ── Panel ── */
+.panel-overlay{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .35s}
+.panel-overlay.open{opacity:1;pointer-events:auto}
+.panel{position:fixed;bottom:0;left:0;right:0;z-index:51;background:rgba(20,12,30,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:20px 20px 0 0;max-height:75dvh;overflow-y:auto;transform:translateY(100%);transition:transform .4s cubic-bezier(.32,.72,.2,1);box-shadow:0 -8px 40px rgba(0,0,0,.5)}
+.panel.open{transform:translateY(0)}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;position:sticky;top:0;background:inherit;z-index:2;border-radius:20px 20px 0 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.panel-header h2{font-size:17px;font-weight:700;color:var(--bright)}
+.panel-close{width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.04);color:var(--dim);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.3s}
+.panel-close:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.panel-body{padding:12px 20px 24px}
+.panel-actions{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.panel-actions .btn{font-size:13px;padding:9px 14px;background:rgba(255,255,255,.04)}
+.panel-mode-lbl{font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:.5px}
+.panel-mode-lbl strong{color:var(--accent-l);transition:color .4s}
+.add-form{display:flex;gap:8px;margin-bottom:12px}
+.add-form input{flex:1;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.2);color:var(--text);font-size:14px;outline:none;transition:.3s}
+.add-form input::placeholder{color:var(--dim)}
+.add-form input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--glow-c)}
+.add-form button{padding:10px 18px;border-radius:10px;border:none;background:var(--accent);color:#2a1a30;font-weight:600;font-size:14px;cursor:pointer;transition:.3s;white-space:nowrap}
+.add-form button:hover{background:var(--accent-l)}
+.add-form button:active{transform:scale(.96)}
+.q-list{display:flex;flex-direction:column;gap:6px}
+.q-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.03);transition:.3s}
+.q-item.used{opacity:.3;background:rgba(255,255,255,.01)}
+.q-item .q-idx{width:24px;font-size:12px;color:var(--dim);text-align:center;flex-shrink:0}
+.q-item .q-txt{flex:1;font-size:14px;line-height:1.4;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.q-item .q-used-badge{font-size:11px;color:var(--accent-l);padding:2px 8px;border-radius:6px;background:rgba(var(--accent-r),.08);white-space:nowrap;flex-shrink:0}
+.q-item .q-actions{display:flex;gap:4px;flex-shrink:0}
+.q-item .q-actions button{width:28px;height:28px;border-radius:6px;border:none;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.3s}
+.q-del{background:rgba(200,60,60,.08);color:#d07070}
+.q-del:hover{background:rgba(200,60,60,.16)}
+.q-toggle{background:rgba(255,255,255,.04);color:var(--dim)}
+.q-toggle:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.rst-all{width:100%;padding:10px;border-radius:10px;border:1px dashed rgba(255,255,255,.05);background:transparent;color:var(--dim);font-size:13px;cursor:pointer;transition:.3s;margin-top:8px}
+.rst-all:hover{border-color:rgba(var(--accent-r),.15);color:var(--accent-l);background:rgba(var(--accent-r),.02)}
+.empty-state{padding:24px 0;text-align:center;color:var(--dim)}
+.empty-state .ico{font-size:36px;margin-bottom:8px;opacity:.4}
+.empty-state p{font-size:14px}
+.panel::-webkit-scrollbar{width:4px}
+.panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.06);border-radius:4px}
+
+@media(max-width:380px){
+  .container{padding:6px 12px 16px}
+  .bucket{width:170px;height:120px}
+  .bucket-rim{width:182px;height:9px}
+  .scene{max-width:280px}
+  .question-card{padding:14px 16px;min-height:56px}
+  .drawn-number{font-size:34px;min-height:34px}
+  .petal{width:10px;height:9px}
+  .mode-tab{padding:4px 10px;font-size:11px}
+}
+@media(min-width:600px){
+  .container{max-width:500px;padding:12px 24px 28px}
+  .title{font-size:20px}
+  .bucket{width:230px;height:165px}
+  .bucket-rim{width:246px}
+  .scene{max-width:380px}
+  .question-card .q-text{font-size:21px}
+}
+</style>
+</head>
+<body>
+<div class="petal-layer" id="petalLayer"></div>
+<canvas id="particleCanvas"></canvas>
+<div class="container">
+  <header class="header">
+    <div class="header-left">
+      <div class="logo" id="logoBox">🎙</div>
+      <div class="title">老同学<span id="titleAccent">灵签</span></div>
+    </div>
+    <div class="progress"><strong id="usedCount">0</strong> / <span id="totalCount">20</span></div>
+  </header>
+
+  <div class="mode-tabs" id="modeTabs">
+    <button class="mode-tab active" data-mode="normal">🎙 访谈</button>
+    <button class="mode-tab" data-mode="truth">♥ 真心话</button>
+  </div>
+
+  <div class="scene">
+    <div class="ambient-glow" id="ambientGlow"></div>
+    <div class="drawn-number" id="drawnNumber"><span class="label">第</span><span id="drawnNumVal">—</span><span class="label">签</span></div>
+    <div class="bucket-group" id="bucketGroup">
+      <div class="bucket-rim"></div>
+      <div class="bucket" id="bucket">
+        <div class="bucket-body">
+          <div class="bucket-inner"></div>
+          <div class="bucket-band"></div>
+        </div>
+        <div class="sticks-container" id="sticksContainer"></div>
+        <span class="bucket-empty-text" id="bucketEmptyText">— 签 尽 —</span>
+      </div>
+    </div>
+    <div class="bucket-shadow"></div>
+  </div>
+
+  <div class="question-card hidden" id="questionCard">
+    <span class="q-label" id="qLabel">✦ 灵签所示</span>
+    <div class="q-text" id="questionText">轻触签筒，摇一签</div>
+    <span class="q-number" id="questionNumber"></span>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-draw" id="drawBtn"><span class="btn-icon">🏮</span> <span class="btn-text">摇 签</span></button>
+    <button class="btn btn-secondary" id="manageBtn">✎ 管理</button>
+  </div>
+</div>
+
+<div class="panel-overlay" id="panelOverlay"></div>
+<div class="panel" id="panel">
+  <div class="panel-header">
+    <h2>✎ 问题管理</h2>
+    <button class="panel-close" id="panelClose">✕</button>
+  </div>
+  <div class="panel-body">
+    <div class="panel-mode-lbl">当前编辑：<strong id="panelModeLabel">🎙 访谈题库</strong></div>
+    <div class="add-form">
+      <input type="text" id="newQInput" placeholder="输入新问题…" maxlength="200">
+      <button id="addQBtn">添加</button>
+    </div>
+    <div class="panel-actions">
+      <button class="btn btn-secondary" id="resetUsedBtn">⟳ 重置已抽</button>
+      <button class="btn btn-danger" id="resetAllBtn">重置全部</button>
+    </div>
+    <div class="q-list" id="qList"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+const NORMAL_Q=[
+  "还记得我们第一次见面是什么时候吗？",
+  "上学时你印象最深的一件事是什么？",
+  "如果再回到学生时代，你最想改变什么？",
+  "你最近在忙什么？",
+  "用三个词形容一下你现在的生活状态",
+  "你现在在哪个城市，过得怎么样？",
+  "还记得咱们班最搞笑的同学是谁吗？",
+  "你现在的职业是什么，喜欢吗？",
+  "上学时的梦想实现了吗？",
+  "如果让你对当年的自己说一句话，你会说什么？",
+  "你现在最常联系的同学是谁？",
+  "你觉得毕业以后自己最大的变化是什么？",
+  "你最近一次开心大笑是因为什么？",
+  "你现在有什么一直没有实现的愿望？",
+  "用一句话总结你的学生时代",
+  "你现在最想对老同学说的一句话是什么？",
+  "你觉得自己现在幸福吗？",
+  "你还记得咱们班的口号或班歌吗？",
+  "你最近在看什么剧或书？",
+  "如果让你邀请一个同学去荒岛，你会选谁？",
+  "上学时你最喜欢哪门课？为什么？",
+  "你学生时代最害怕的老师是谁？",
+  "你上学时做过最疯狂的事是什么？",
+  "你现在的日常作息是怎样的？",
+  "你做过最尴尬的事是什么？",
+  "你最想拥有什么超能力？",
+  "你觉得自己上辈子是什么？",
+  "你最不能忍受的食物是什么？",
+  "你手机里最老的一张照片是什么？",
+  "如果能和任何名人共进晚餐，你选谁？",
+  "你接下来三年有什么计划？",
+  "你理想中的生活是什么样的？",
+  "如果不用考虑钱，你最想做什么？",
+  "你最想去哪个城市生活？",
+  "你想对十年后的自己说什么？",
+  "你觉得自己五年后会是什么样子？",
+  "你最想学习什么新技能？",
+  "如果人生可以重来，你会选择什么职业？",
+  "你最近学到最有意思的东西是什么？",
+  "你觉得自己最大的优点是什么？",
+];
+
+const TRUTH_Q=[
+  "你心里一直有但没说出来的人是谁？",
+  "你最后悔的一件事是什么？",
+  "你有没有对不起过谁？",
+  "你偷偷喜欢过班里的谁？",
+  "你最不想让人知道的秘密是什么？",
+  "你上一次哭是什么时候？为什么？",
+  "你觉得自己最大的缺点是什么？",
+  "你有没有做过让自己很愧疚的事？",
+  "如果可以删掉一段记忆，你选哪段？",
+  "你害怕什么？",
+  "你最遗憾没有说出口的话是什么？",
+  "你觉得自己在别人眼里是什么样的？",
+  "你有过放弃一切的念头吗？",
+  "你爱过谁吗？现在还在意吗？",
+  "你觉得人生最难的时刻是什么时候？",
+  "你现在有什么放不下的事？",
+  "如果今天是最后一天，你会做什么？",
+  "你最感激的人是谁？为什么？",
+  "你对自己最不满意的地方是什么？",
+  "你觉得什么是真正的幸福？",
+  "你有多少存款？",
+  "你上一次说谎是什么时候？",
+  "你做过最叛逆的事是什么？",
+  "你觉得自己和上学时相比变了什么？",
+  "你有过表白的经历吗？结果如何？",
+];
+
+const STORAGE_KEY='laotongxue_v5';
+const TIP_COLORS=['#E85D5D','#E8A040','#5DB0E8','#6BCB9D','#B879D4','#F0925A','#E87A9F','#5DBCD2','#FFA726','#AB47BC'];
+const RED_TIPS=['#d44040','#e06060','#cc3333','#d45050','#c03030','#d84848','#e05858','#cc4040','#d44040','#c83838'];
+
+// ── State ──
+let questions={normal:[],truth:[]};
+let mode='normal'; // 'normal' | 'truth'
+let isDrawing=false,panelOpen=false;
+
+const $=s=>document.getElementById(s);
+const S={
+  sticksContainer:$('sticksContainer'),bucket:$('bucket'),bucketGroup:$('bucketGroup'),
+  emptyText:$('bucketEmptyText'),drawnNum:$('drawnNumber'),drawnVal:$('drawnNumVal'),
+  glow:$('ambientGlow'),card:$('questionCard'),qText:$('questionText'),qNum:$('questionNumber'),
+  qLabel:$('qLabel'),drawBtn:$('drawBtn'),manageBtn:$('manageBtn'),
+  usedCnt:$('usedCount'),totalCnt:$('totalCount'),
+  panel:$('panel'),overlay:$('panelOverlay'),pClose:$('panelClose'),
+  qList:$('qList'),newQ:$('newQInput'),addQ:$('addQBtn'),
+  resetUsed:$('resetUsedBtn'),resetAll:$('resetAllBtn'),
+  pc:$('particleCanvas'),petalLayer:$('petalLayer'),logoBox:$('logoBox'),
+  titleAccent:$('titleAccent'),panelModeLabel:$('panelModeLabel'),
+  modeTabs:$('modeTabs'),
+};
+
+// ── Theme ──
+function applyTheme(m){
+  const root=document.documentElement;
+  const isT=m==='truth';
+  root.style.setProperty('--accent',isT?'var(--red)':'var(--gold)');
+  root.style.setProperty('--accent-l',isT?'var(--red-l)':'var(--gold-l)');
+  root.style.setProperty('--accent-d',isT?'var(--red-d)':'var(--gold-d)');
+  root.style.setProperty('--accent-r',isT?'212,60,60':'212,168,67');
+  root.style.setProperty('--glow-c',isT?'rgba(212,60,60,.12)':'rgba(212,168,67,.1)');
+  // Update static elements
+  S.logoBox.style.background=isT?'linear-gradient(135deg,#d44040,#8b2020)':'linear-gradient(135deg,var(--gold),var(--gold-d))';
+  S.titleAccent.style.color=isT?'var(--red-l)':'var(--gold)';
+  S.qLabel.textContent=isT?'♥ 真心话':'✦ 灵签所示';
+  // Update tabs
+  S.modeTabs.querySelectorAll('.mode-tab').forEach(t=>{
+    t.classList.toggle('active',t.dataset.mode===m);
+  });
+  // Update button text
+  const icon=S.drawBtn.querySelector('.btn-icon');
+  icon.textContent=isT?'♥':'🏮';
+  S.drawBtn.style.background=isT?'linear-gradient(135deg,#d44040,#8b2020)':'linear-gradient(135deg,var(--gold),var(--gold-d))';
+  S.panelModeLabel.textContent=isT?'♥ 真心话题库':'🎙 访谈题库';
+  TIP_COLORS.forEach((_,i)=>{});
+}
+
+// ── Sound ──
+const Sound={
+  ctx:null,
+  _init(){try{this.ctx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}},
+  _ensure(){if(!this.ctx)this._init();if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume()},
+  chime(pitch=880,dur=1.8){
+    this._ensure();if(!this.ctx)return;
+    const n=this.ctx.currentTime;
+    const harms=[1,2.01,3.0,4.02,5.01,6.03];
+    const amps=[.25,.12,.08,.04,.02,.01];
+    harms.forEach((h,i)=>{
+      const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+      o.type='sine';o.frequency.setValueAtTime(pitch*h,n);
+      g.gain.setValueAtTime(amps[i],n);
+      g.gain.exponentialRampToValueAtTime(.001,n+dur*(.2+.8*(1-i*.15)));
+      o.connect(g);g.connect(this.ctx.destination);
+      o.start(n);o.stop(n+dur);
+    });
+    const o2=this.ctx.createOscillator(),g2=this.ctx.createGain();
+    o2.type='sine';o2.frequency.setValueAtTime(pitch*4.01,n);
+    g2.gain.setValueAtTime(.03,n);g2.gain.exponentialRampToValueAtTime(.001,n+dur*.3);
+    o2.connect(g2);g2.connect(this.ctx.destination);
+    o2.start(n);o2.stop(n+dur*.5);
+  },
+  rattle(count=4){
+    this._ensure();if(!this.ctx)return;
+    const n=this.ctx.currentTime;
+    for(let i=0;i<count;i++){
+      const t=n+i*.07+Math.random()*.03;
+      const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+      o.type='triangle';o.frequency.setValueAtTime(500+Math.random()*500,t);
+      g.gain.setValueAtTime(.06,t);g.gain.exponentialRampToValueAtTime(.001,t+.035);
+      o.connect(g);g.connect(this.ctx.destination);
+      o.start(t);o.stop(t+.04);
+    }
+  },
+  whoosh(){
+    this._ensure();if(!this.ctx)return;
+    const n=this.ctx.currentTime;
+    const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+    o.type='sine';o.frequency.setValueAtTime(180,n);
+    o.frequency.exponentialRampToValueAtTime(1000,n+.35);
+    g.gain.setValueAtTime(.06,n);g.gain.linearRampToValueAtTime(.1,n+.08);
+    g.gain.exponentialRampToValueAtTime(.001,n+.5);
+    o.connect(g);g.connect(this.ctx.destination);
+    o.start(n);o.stop(n+.6);
+    const buf=this.ctx.createBuffer(1,this.ctx.sampleRate*.3,this.ctx.sampleRate);
+    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()-.5)*(1-i/d.length);
+    const ns=this.ctx.createBufferSource(),ng=this.ctx.createGain();
+    ns.buffer=buf;ng.gain.setValueAtTime(.015,n);ng.gain.exponentialRampToValueAtTime(.001,n+.3);
+    const f=this.ctx.createBiquadFilter();f.type='highpass';f.frequency.setValueAtTime(500,n);
+    ns.connect(f);f.connect(ng);ng.connect(this.ctx.destination);
+    ns.start(n);ns.stop(n+.35);
+  },
+  fanfare(){
+    this._ensure();if(!this.ctx)return;
+    const n=this.ctx.currentTime,notes=[523,659,784,1047];
+    notes.forEach((f,i)=>{
+      const t=n+i*.06;
+      const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+      o.type='sine';o.frequency.setValueAtTime(f,t);
+      g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+1.2);
+      o.connect(g);g.connect(this.ctx.destination);
+      o.start(t);o.stop(t+1.5);
+      const o2=this.ctx.createOscillator(),g2=this.ctx.createGain();
+      o2.type='sine';o2.frequency.setValueAtTime(f*2,t);
+      g2.gain.setValueAtTime(.06,t);g2.gain.exponentialRampToValueAtTime(.001,t+.6);
+      o2.connect(g2);g2.connect(this.ctx.destination);
+      o2.start(t);o2.stop(t+.8);
+    });
+  }
+};
+
+// ── Petals ──
+function initPetals(){
+  const l=S.petalLayer;
+  const cs=['#ffb7c5','#ff9eb5','#ffc0cb','#ffd1dc','#e8a0b4','#f5c6d0'];
+  for(let i=0;i<25;i++){
+    const p=document.createElement('div');p.className='petal';
+    const c=cs[i%cs.length],sz=8+Math.random()*12;
+    const w=sz*1.1,h=sz*.85,lft=Math.random()*100;
+    const dur=14+Math.random()*16,dl=Math.random()*20;
+    const d1=(Math.random()-.5)*40,d2=(Math.random()-.5)*30,d3=(Math.random()-.5)*45,d4=(Math.random()-.5)*35;
+    p.style.cssText=`left:${lft}%;width:${w}px;height:${h}px;background:${c};--fall:${dur}s;--dl:${dl}s;--dx1:${d1}px;--dx2:${d2}px;--dx3:${d3}px;--dx4:${d4}px;`;
+    l.appendChild(p);
+  }
+}
+
+// ── Particles ──
+const pCtx=S.pc.getContext('2d');
+let particles=[];
+function resizePC(){
+  pCtx.canvas.width=window.innerWidth*devicePixelRatio;
+  pCtx.canvas.height=window.innerHeight*devicePixelRatio;
+  pCtx.canvas.style.width=window.innerWidth+'px';
+  pCtx.canvas.style.height=window.innerHeight+'px';
+  pCtx.scale(devicePixelRatio,devicePixelRatio);
+}
+resizePC();window.addEventListener('resize',resizePC);
+
+function emitParticles(x,y,count=20,color='#f0d68a',spread=3){
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2,s=1+Math.random()*spread;
+    particles.push({x,y,vx:Math.cos(a)*s*(.5+Math.random()*.5),vy:Math.sin(a)*s*(.5+Math.random()*.5)-.5,life:1,decay:.008+Math.random()*.012,size:2+Math.random()*4,color,rot:Math.random()*6,rotV:(Math.random()-.5)*.3});
+  }
+}
+function emitBurst(x,y){
+  const isT=mode==='truth';
+  const cs=isT?['#ff6b6b','#d44040','#ff4444','#ff8888','#ffb7c5']:['#f0d68a','#d4a843','#ffd700','#fff8dc','#ffb7c5'];
+  for(let i=0;i<60;i++){
+    const a=Math.random()*Math.PI*2,s=1+Math.random()*5,c=cs[Math.floor(Math.random()*cs.length)];
+    particles.push({x:x+(Math.random()-.5)*30,y:y+(Math.random()-.5)*10,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:1,decay:.006+Math.random()*.01,size:2+Math.random()*5,color:c,rot:Math.random()*6,rotV:(Math.random()-.5)*.4});
+  }
+}
+function updP(){for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.04;p.life-=p.decay;p.rot+=p.rotV;if(p.life<=0||p.y>window.innerHeight+20)particles.splice(i,1)}}
+function drawP(){
+  const w=window.innerWidth,h=window.innerHeight;
+  pCtx.clearRect(0,0,w,h);
+  for(const p of particles){
+    pCtx.save();pCtx.translate(p.x,p.y);pCtx.rotate(p.rot);
+    pCtx.globalAlpha=Math.max(0,p.life);pCtx.fillStyle=p.color;
+    const s=p.size*Math.max(0,p.life);
+    pCtx.beginPath();pCtx.moveTo(0,-s);pCtx.lineTo(s*.6,0);pCtx.lineTo(0,s);pCtx.lineTo(-s*.6,0);pCtx.closePath();
+    pCtx.fill();pCtx.shadowColor=p.color;pCtx.shadowBlur=s*3;pCtx.fill();
+    pCtx.restore();
+  }
+}
+function rLoop(){updP();pCtx.clearRect(0,0,window.innerWidth,window.innerHeight);drawP();requestAnimationFrame(rLoop)}
+rLoop();
+
+// ── Data ──
+function loadQ(){
+  try{
+    const s=localStorage.getItem(STORAGE_KEY);
+    if(s){const d=JSON.parse(s);
+      if(d.normal&&Array.isArray(d.normal)&&d.normal.length>0)questions.normal=d.normal;
+      if(d.truth&&Array.isArray(d.truth)&&d.truth.length>0)questions.truth=d.truth;
+    }
+  }catch(e){}
+  if(!questions.normal||questions.normal.length===0)questions.normal=NORMAL_Q.map(q=>({text:q,used:false}));
+  if(!questions.truth||questions.truth.length===0)questions.truth=TRUTH_Q.map(q=>({text:q,used:false}));
+}
+function saveQ(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(questions))}catch(e){}}
+function activeQ(){return questions[mode].filter(q=>!q.used)}
+function usedCnt(){return questions[mode].filter(q=>q.used).length}
+
+// ── Spring ──
+function spring(tgt,stiff=.08,damp=.78){
+  let val=tgt,vel=0;
+  return {update(){const f=(tgt-val)*stiff;vel=(vel+f)*damp;val+=vel;return val},set(v){val=v;vel=0},snap(){val=tgt;vel=0},settled(tol=.5){return Math.abs(val-tgt)<tol&&Math.abs(vel)<.1}};
+}
+
+// ── Sticks ──
+function renderSticks(){
+  const a=activeQ();S.sticksContainer.innerHTML='';
+  if(a.length===0){S.bucket.style.opacity='.3';S.emptyText.style.display='block';S.drawnNum.classList.remove('show');return}
+  S.bucket.style.opacity='1';S.emptyText.style.display='none';
+  const n=Math.min(a.length,10),gap=78/(n+1);
+  const colors=mode==='truth'?RED_TIPS:TIP_COLORS;
+  for(let i=0;i<n;i++){
+    const e=document.createElement('div');e.className='stick';
+    const c=colors[i%colors.length],rot=(Math.random()-.5)*10,h=60+Math.random()*28,x=gap*(i+1)+(Math.random()-.5)*5;
+    e.style.cssText=`left:${x}%;height:${h}px;--rot:${rot}deg;transform:rotate(${rot}deg);`;
+    e.innerHTML=`<div class="stick-tip" style="background:linear-gradient(to bottom,${c},${c}aa)"></div>`;
+    e.dataset.idx=i;S.sticksContainer.appendChild(e);
+  }
+}
+
+// ── Bucket Spring ──
+let bSpring=null,sRAF=null,springing=false;
+function startBucketSpring(){
+  const g=S.bucketGroup;bSpring=spring(4,.055,.85);bSpring.set(14);springing=true;
+  Sound.rattle(2);
+  function f(){if(!springing)return;const v=bSpring.update();g.style.transform=`rotateX(${v}deg)`;if(!bSpring.settled()){sRAF=requestAnimationFrame(f)}else{g.style.transform='rotateX(4deg)';springing=false}}
+  sRAF=requestAnimationFrame(f);
+}
+
+// ── Draw ──
+function draw(){
+  if(isDrawing)return;
+  const a=activeQ();
+  if(a.length===0){S.qText.textContent='此模式签已抽完';S.card.classList.remove('hidden','reveal');S.qNum.textContent='';return}
+  isDrawing=true;S.drawBtn.disabled=true;S.card.classList.add('hidden');
+  S.drawnNum.classList.remove('show');S.glow.classList.add('active');
+  
+  const tgtIdx=Math.floor(Math.random()*a.length),globalIdx=questions[mode].indexOf(a[tgtIdx]);
+  const sticks=S.sticksContainer.querySelectorAll('.stick'),stkIdx=tgtIdx%Math.max(1,sticks.length);
+  
+  Sound.chime(mode==='truth'?520:660,1.2);
+  startBucketSpring();
+  
+  let rtimer;
+  setTimeout(()=>{
+    sticks.forEach((s,i)=>{s.classList.add('shaking');s.style.setProperty('--dl',Math.random()*.1+'s')});
+    rtimer=setInterval(()=>Sound.rattle(3),350);
+  },200);
+  
+  setTimeout(()=>{S.glow.style.transform='translateX(-50%) scale(1.5)';Sound.chime(mode==='truth'?700:880,.8)},350);
+  
+  setTimeout(()=>{
+    clearInterval(rtimer);
+    sticks.forEach(s=>s.classList.remove('shaking'));
+    const w=sticks[stkIdx];if(w)w.classList.add('launching');
+    Sound.whoosh();
+    const r=S.bucket.getBoundingClientRect();
+    emitParticles(r.left+r.width/2+(Math.random()-.5)*40,r.top+20,25,mode==='truth'?'#ff6b6b':'#f0d68a',4);
+    S.drawnVal.textContent=`#${tgtIdx+1}`;S.drawnNum.classList.add('show');
+  },1100);
+  
+  setTimeout(()=>{
+    clearInterval(rtimer);
+    const r=S.bucket.getBoundingClientRect();
+    emitBurst(r.left+r.width/2,r.top-20);
+    emitParticles(r.left+r.width/2,r.top-20,30,mode==='truth'?'#d44040':'#ffd700',5);
+    Sound.fanfare();
+    reveal(globalIdx);
+    setTimeout(()=>{S.glow.classList.remove('active');S.glow.style.transform=''},500);
+    isDrawing=false;S.drawBtn.disabled=false;
+  },2000);
+}
+
+function reveal(idx){
+  const q=questions[mode][idx];if(!q)return;
+  q.used=true;saveQ();updateUI();
+  S.qText.textContent=q.text;S.qNum.textContent=`#${idx+1}`;
+  S.card.classList.remove('hidden','reveal');void S.card.offsetWidth;
+  S.card.classList.add('reveal');
+  setTimeout(()=>renderSticks(),400);
+}
+
+// ── Mode Switch ──
+function switchMode(m){
+  if(m===mode||isDrawing)return;
+  mode=m;applyTheme(m);
+  S.card.classList.add('hidden');S.card.classList.remove('reveal');
+  S.qText.textContent='轻触签筒，摇一签';S.qNum.textContent='';
+  S.drawnNum.classList.remove('show');S.glow.classList.remove('active');
+  updateUI();
+}
+
+// ── UI ──
+function updateUI(){
+  S.usedCnt.textContent=usedCnt();S.totalCnt.textContent=questions[mode].length;
+  renderQList();renderSticks();
+}
+
+function togglePanel(o){
+  panelOpen=o!==undefined?o:!panelOpen;
+  S.panel.classList.toggle('open',panelOpen);S.overlay.classList.toggle('open',panelOpen);
+  document.body.style.overflow=panelOpen?'hidden':'';
+}
+
+function renderQList(){
+  if(!S.qList)return;S.qList.innerHTML='';
+  const qs=questions[mode];
+  if(qs.length===0){S.qList.innerHTML='<div class="empty-state"><div class="ico">📋</div><p>还没有问题</p></div>';return}
+  qs.forEach((q,i)=>{
+    const el=document.createElement('div');el.className='q-item'+(q.used?' used':'');
+    el.innerHTML=`<span class="q-idx">#${i+1}</span><span class="q-txt">${esc(q.text)}</span>${q.used?'<span class="q-used-badge">已抽</span>':''}<div class="q-actions"><button class="q-toggle" data-i="${i}">${q.used?'↩':'✓'}</button><button class="q-del" data-i="${i}">✕</button></div>`;
+    el.querySelector('.q-toggle').onclick=()=>{
+      questions[mode][i].used=!questions[mode][i].used;saveQ();updateUI();
+      if(!questions[mode][i].used){S.card.classList.add('hidden');S.card.classList.remove('reveal');S.qText.textContent='轻触签筒，摇一签';S.qNum.textContent='';S.drawnNum.classList.remove('show')}
+    };
+    el.querySelector('.q-del').onclick=()=>{
+      if(!confirm(`删除？`))return;
+      if(S.qText.textContent===questions[mode][i].text){S.card.classList.add('hidden');S.card.classList.remove('reveal');S.qText.textContent='轻触签筒，摇一签';S.qNum.textContent='';S.drawnNum.classList.remove('show')}
+      questions[mode].splice(i,1);saveQ();updateUI();
+    };
+    S.qList.appendChild(el);
+  });
+}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+function resetUsed(){
+  isDrawing=false;S.drawBtn.disabled=false;springing=false;
+  cancelAnimationFrame(sRAF);S.bucketGroup.style.transform='rotateX(4deg)';
+  S.sticksContainer.querySelectorAll('.shaking,.launching').forEach(s=>s.classList.remove('shaking','launching'));
+  questions[mode].forEach(q=>{q.used=false});saveQ();updateUI();
+  S.card.classList.add('hidden');S.card.classList.remove('reveal');S.qText.textContent='轻触签筒，摇一签';S.qNum.textContent='';S.drawnNum.classList.remove('show');
+  S.glow.classList.remove('active');S.glow.style.transform='';
+}
+function resetAll(){
+  if(!confirm('重置所有问题？'))return;
+  isDrawing=false;S.drawBtn.disabled=false;springing=false;
+  cancelAnimationFrame(sRAF);S.bucketGroup.style.transform='rotateX(4deg)';
+  S.sticksContainer.querySelectorAll('.shaking,.launching').forEach(s=>s.classList.remove('shaking','launching'));
+  const isT=mode==='truth';
+  questions[mode]=(isT?TRUTH_Q:NORMAL_Q).map(q=>({text:q,used:false}));saveQ();updateUI();
+  S.card.classList.add('hidden');S.card.classList.remove('reveal');S.qText.textContent='轻触签筒，摇一签';S.qNum.textContent='';S.drawnNum.classList.remove('show');
+  S.glow.classList.remove('active');S.glow.style.transform='';
+}
+
+// ── Events ──
+S.drawBtn.onclick=draw;
+S.manageBtn.onclick=()=>togglePanel(true);
+S.pClose.onclick=()=>togglePanel(false);
+S.overlay.onclick=()=>togglePanel(false);
+S.addQ.onclick=()=>{
+  const t=S.newQ.value.trim();if(!t)return;
+  questions[mode].push({text:t,used:false});saveQ();updateUI();S.newQ.value='';S.newQ.focus();
+  setTimeout(()=>S.panel.scrollTop=S.panel.scrollHeight,100);
+};
+S.newQ.addEventListener('keydown',e=>{if(e.key==='Enter')S.addQ.click()});
+S.resetUsed.onclick=resetUsed;
+S.resetAll.onclick=resetAll;
+S.modeTabs.addEventListener('click',e=>{const t=e.target.closest('.mode-tab');if(t)switchMode(t.dataset.mode)});
+
+loadQ();initPetals();applyTheme('normal');updateUI();
+
+// ── Theme System ──
+const THEMES={
+  cherry:{
+    name:'🌸 樱花',bg:'radial-gradient(ellipse at 75%20%,rgba(255,200,160,.15)0%,transparent 50%),radial-gradient(ellipse at 30%80%,rgba(200,180,255,.08)0%,transparent 40%),linear-gradient(175deg,#fef6fb 0%,#fce4ec 35%,#f0dce8 55%,#dce8f5 85%,#c8dcef 100%)',
+    petal:true,accent:'gold',desc:'柔和的粉蓝渐变 + 飘落樱花'
+  },
+  beach:{
+    name:'🌊 海边',bg:`
+      radial-gradient(ellipse at 50% 10%, rgba(255,220,120,.15) 0%, transparent 40%),
+      radial-gradient(ellipse at 20% 80%, rgba(100,180,255,.06) 0%, transparent 30%),
+      linear-gradient(178deg, #4a90d9 0%, #87CEEB 25%, #B0E0E6 45%, #f4e4c1 70%, #e8d5a0 85%, #c9a96e 100%)
+    `.trim().replace(/\n\s*/g,''),
+    petal:false,accent:'#4a90d9',desc:'蓝天碧海 + 金色沙滩 + 云影波光',
+    decor:'beach'
+  },
+  pixel:{
+    name:'🕹️ 像素',bg:`
+      radial-gradient(ellipse at 50% 0%, #4a2d8a 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 100%, #1a0d3a 0%, transparent 40%),
+      linear-gradient(175deg, #2d1b69 0%, #1a0d3a 40%, #0d0820 100%)
+    `.trim().replace(/\n\s*/g,''),
+    petal:false,accent:'#00E5FF',desc:'复古霓虹紫 + 扫描线 + 像素太阳',
+    decor:'pixel'
+  },
+  gold:{
+    name:'👑 黄金',bg:`
+      radial-gradient(ellipse at 50% 0%, rgba(255,200,50,.2) 0%, transparent 50%),
+      radial-gradient(ellipse at 30% 70%, rgba(180,100,30,.1) 0%, transparent 40%),
+      radial-gradient(ellipse at 70% 30%, rgba(200,150,50,.08) 0%, transparent 30%),
+      linear-gradient(170deg, #2a1a10 0%, #3a2515 25%, #4a3020 45%, #2a1a10 70%, #1a0d08 100%)
+    `.trim().replace(/\n\s*/g,''),
+    petal:false,accent:'#FFD700',desc:'奢华暗金 + 光柱倾泻 + 金色粒子',
+    decor:'gold'
+  },
+  jojo:{
+    name:'⭐ JOJO',bg:`
+      radial-gradient(ellipse at 80% 20%, rgba(200,50,200,.15) 0%, transparent 40%),
+      radial-gradient(ellipse at 20% 80%, rgba(50,200,100,.08) 0%, transparent 30%),
+      radial-gradient(ellipse at 50% 50%, rgba(100,0,150,.1) 0%, transparent 50%),
+      linear-gradient(165deg, #1a0a20 0%, #2a1040 30%, #1a0a30 55%, #0a0515 85%, #050208 100%)
+    `.trim().replace(/\n\s*/g,''),
+    petal:false,accent:'#FF69B4',desc:'暗紫魅影 + 星尘 + ゴゴゴゴ',
+    decor:'jojo'
+  }
+};
+
+let currentTheme='cherry';
+
+// Decor elements container
+const decorContainer=document.createElement('div');decorContainer.id='decorContainer';decorContainer.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden';
+document.body.prepend(decorContainer);
+
+function clearDecor(){
+  decorContainer.innerHTML='';
+  document.querySelectorAll('.scanline-overlay,.vignette-overlay').forEach(e=>e.remove());
+  S.petalLayer.style.display='';
+}
+
+function applyDecor(type){
+  clearDecor();
+  if(type==='beach'){
+    // Sun
+    const sun=document.createElement('div');sun.style.cssText='position:absolute;top:30px;right:40px;width:70px;height:70px;border-radius:50%;background:radial-gradient(circle,#fff8dc,#ffd700);box-shadow:0 0 60px rgba(255,215,0,.4),0 0 120px rgba(255,215,0,.15);';
+    decorContainer.appendChild(sun);
+    // Clouds
+    for(let i=0;i<4;i++){
+      const cl=document.createElement('div');
+      const t=8+Math.random()*15,l=5+Math.random()*70,s=1+Math.random()*.5;
+      cl.style.cssText=`
+        position:absolute;top:${t}%;left:${l}%;width:${60*s}px;height:${20*s}px;
+        background:rgba(255,255,255,.4);border-radius:50%;
+        filter:blur(${4*s}px);opacity:.6;
+        animation:cloudDrift ${20+Math.random()*15}s linear infinite;
+        animation-delay:${Math.random()*-10}s;
+      `;
+      decorContainer.appendChild(cl);
+    }
+    // Waves
+    for(let i=0;i<3;i++){
+      const wv=document.createElement('div');
+      const b=8+i*6+Math.random()*4,h=12+Math.random()*8,s=.8+Math.random()*.4;
+      wv.style.cssText=`
+        position:absolute;bottom:${b}%;left:0;right:0;height:${h}px;
+        background:rgba(100,180,255,${.12-i*.03});
+        border-radius:50% 50% 0 0;
+        transform-origin:center;
+        animation:waveMove ${4+s}s ease-in-out infinite alternate;
+        animation-delay:${i*-1.5}s;
+      `;
+      decorContainer.appendChild(wv);
+    }
+    // Beach line
+    const beach=document.createElement('div');beach.style.cssText='position:absolute;bottom:0;left:0;right:0;height:8%;background:linear-gradient(to bottom,transparent,rgba(200,170,100,.15));';
+    decorContainer.appendChild(beach);
+    // Petals off
+    S.petalLayer.style.display='none';
+  }
+  else if(type==='pixel'){
+    S.petalLayer.style.display='none';
+    // Scanlines
+    const sl=document.createElement('div');sl.className='scanline-overlay';
+    sl.style.cssText='position:fixed;inset:0;z-index:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08)2px,rgba(0,0,0,.08)4px);';
+    document.body.appendChild(sl);
+    // Pixel sun
+    const sun=document.createElement('div');sun.style.cssText='position:absolute;top:25px;right:35px;width:0;height:0;box-shadow:0 0 #FFD700,8px 0 #FFD700,16px 0 #FFD700,-8px 0 #FFD700,0 8px #FFD700,8px 8px #FFD700,16px 8px #FFD700,-8px 8px #FFD700,0 16px #FFD700,8px 16px #FFD700,16px 16px #FFD700,-8px 16px #FFD700,0 -8px #FFD700,8px -8px #FFD700,16px -8px #FFD700,-8px -8px #FFD700,-16px 8px #FFD700,-16px 16px #FFD700,24px 8px #FFD700,24px 16px #FFD700;';
+    decorContainer.appendChild(sun);
+  }
+  else if(type==='gold'){
+    S.petalLayer.style.display='none';
+    // Light rays from top
+    const rays=document.createElement('div');rays.style.cssText='position:absolute;inset:0;background:conic-gradient(from 45deg at 50% -10%,transparent 0deg,rgba(255,215,0,.03) 30deg,transparent 60deg,rgba(255,215,0,.02) 120deg,transparent 180deg,rgba(255,215,0,.03) 240deg,transparent 300deg);animation:rayRotate 20s linear infinite;';
+    decorContainer.appendChild(rays);
+    // Gold particles (static glitter)
+    for(let i=0;i<30;i++){
+      const gl=document.createElement('div');
+      const l=Math.random()*100,t=Math.random()*100,s=1+Math.random()*2,d=.5+Math.random()*2,dl=Math.random()*5;
+      gl.style.cssText=`
+        position:absolute;left:${l}%;top:${t}%;
+        width:${s}px;height:${s}px;
+        background:#ffd700;border-radius:50%;
+        opacity:0;box-shadow:0 0 ${d*2}px rgba(255,215,0,.3);
+        animation:glitterFade ${2+Math.random()*3}s ease-in-out infinite;
+        animation-delay:${dl}s;
+      `;
+      decorContainer.appendChild(gl);
+    }
+    // Vignette
+    const vig=document.createElement('div');vig.className='vignette-overlay';
+    vig.style.cssText='position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.4) 100%);';
+    document.body.appendChild(vig);
+  }
+  else if(type==='jojo'){
+    S.petalLayer.style.display='none';
+    // ゴゴゴゴ watermark
+    for(let i=0;i<6;i++){
+      const g=document.createElement('div');
+      const l=5+Math.random()*40,t=10+Math.random()*75,r=-20+Math.random()*40,s=1.5+Math.random()*1.5,dl=Math.random()*8;
+      g.textContent='ゴ　ゴ　ゴ　ゴ';
+      g.style.cssText=`
+        position:absolute;left:${l}%;top:${t}%;
+        font-size:${s}rem;font-weight:900;color:rgba(200,50,200,.03);
+        white-space:nowrap;letter-spacing:4px;
+        transform:rotate(${r}deg);
+        animation:menacingPulse ${4+Math.random()*3}s ease-in-out infinite;
+        animation-delay:${dl}s;
+      `;
+      decorContainer.appendChild(g);
+    }
+    // Star sparkles
+    for(let i=0;i<20;i++){
+      const st=document.createElement('div');
+      const l=Math.random()*90+5,t=Math.random()*80+10,s=.5+Math.random()*1.5,dl=Math.random()*6,d=.5+Math.random()*2;
+      st.innerHTML='✦';
+      st.style.cssText=`
+        position:absolute;left:${l}%;top:${t}%;
+        font-size:${s*10}px;color:rgba(200,50,200,.15);
+        opacity:0;
+        animation:glitterFade ${1.5+Math.random()*3}s ease-in-out infinite;
+        animation-delay:${dl}s;
+      `;
+      decorContainer.appendChild(st);
+    }
+    // Vignette
+    const vig=document.createElement('div');vig.className='vignette-overlay';
+    vig.style.cssText='position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,.5) 100%);';
+    document.body.appendChild(vig);
+  }
+  else {
+    // cherry - default, show petals
+    S.petalLayer.style.display='';
+  }
+}
+
+function switchTheme(key){
+  const t=THEMES[key];if(!t||key===currentTheme)return;
+  currentTheme=key;
+  document.body.style.background=t.bg;
+  applyDecor(t.decor||(t.petal?'':''));
+  // Update accent colors based on theme + mode combo
+  const isTruth=mode==='truth';
+  const accentColors={
+    cherry:{gold:{a:'#d4a843',l:'#f0d68a',d:'#b88930',r:'212,168,67'},truth:{a:'#d44040',l:'#ff6b6b',d:'#8b2020',r:'212,60,60'}},
+    beach:{gold:{a:'#4a90d9',l:'#6db8f0',d:'#2a70b9',r:'74,144,217'},truth:{a:'#d44040',l:'#ff6b6b',d:'#8b2020',r:'212,60,60'}},
+    pixel:{gold:{a:'#00E5FF',l:'#66f0ff',d:'#00b0cc',r:'0,229,255'},truth:{a:'#FF0055',l:'#ff4488',d:'#cc0044',r:'255,0,85'}},
+    gold:{gold:{a:'#FFD700',l:'#ffe44d',d:'#b89600',r:'255,215,0'},truth:{a:'#d44040',l:'#ff6b6b',d:'#8b2020',r:'212,60,60'}},
+    jojo:{gold:{a:'#FF69B4',l:'#ff99cc',d:'#cc4499',r:'255,105,180'},truth:{a:'#FF4444',l:'#ff7777',d:'#cc2222',r:'255,68,68'}},
+  };
+  const ac=accentColors[key]?.[isTruth?'truth':'gold']||accentColors.cherry.gold;
+  const root=document.documentElement;
+  root.style.setProperty('--accent',ac.a);root.style.setProperty('--accent-l',ac.l);
+  root.style.setProperty('--accent-d',ac.d);root.style.setProperty('--accent-r',ac.r);
+  root.style.setProperty('--glow-c',`rgba(${ac.r},.12)`);
+  S.logoBox.style.background=`linear-gradient(135deg,${ac.a},${ac.d})`;
+  S.titleAccent.style.color=ac.l;
+  S.drawBtn.style.background=`linear-gradient(135deg,${ac.a},${ac.d})`;
+  const icon=S.drawBtn.querySelector('.btn-icon');
+  icon.textContent=isTruth?'♥':{cherry:'🏮',beach:'🌊',pixel:'🕹️',gold:'👑',jojo:'⭐'}[key]||'🏮';
+  // Update tab button highlights
+  S.modeTabs.querySelectorAll('.mode-tab').forEach(t=>{
+    t.style.setProperty('background',t.classList.contains('active')?ac.a:'');
+    if(t.classList.contains('active'))t.style.color='#2a1a30';
+  });
+  // Theme buttons highlight
+  document.querySelectorAll('.theme-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.theme===key);
+    if(b.dataset.theme===key)b.style.borderColor=ac.a;
+    else b.style.borderColor='rgba(255,255,255,.06)';
+  });
+  S.qLabel.style.color=ac.a;
+  S.panelModeLabel.querySelector('strong').style.color=ac.l;
+  updateUI();
+}
+
+// ── Add keyframe animations for themes ──
+const styleSheet=document.createElement('style');
+styleSheet.textContent=`
+@keyframes cloudDrift{0%{transform:translateX(0)}100%{transform:translateX(-80px)}}
+@keyframes waveMove{0%{transform:translateX(0)}100%{transform:translateX(-20%)}}
+@keyframes rayRotate{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes glitterFade{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:.6;transform:scale(1)}}
+@keyframes menacingPulse{0%,100%{opacity:.03}50%{opacity:.06}}
+`;
+document.head.appendChild(styleSheet);
+
+// Theme selector UI
+const themeRow=document.createElement('div');
+themeRow.style.cssText='display:flex;gap:3px;padding:2px;border-radius:8px;background:rgba(20,12,30,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin:2px auto 0;width:fit-content;position:relative;z-index:2;';
+Object.keys(THEMES).forEach(k=>{
+  const b=document.createElement('button');b.className='theme-btn';b.dataset.theme=k;
+  b.textContent=THEMES[k].name;
+  b.style.cssText=`
+    padding:3px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.06);
+    font-size:10px;font-weight:600;cursor:pointer;transition:all .3s;
+    background:transparent;color:var(--dim);font-family:inherit;
+    -webkit-tap-highlight-color:transparent;user-select:none;
+  `;
+  b.addEventListener('click',()=>switchTheme(k));
+  themeRow.appendChild(b);
+});
+themeRow.querySelector('[data-theme=cherry]').style.borderColor='#d4a843';
+S.modeTabs.parentNode.insertBefore(themeRow,S.modeTabs.nextSibling);
+
+// ── Override switchMode to update theme accent ──
+const origApplyTheme=applyTheme;
+applyTheme=function(m){
+  origApplyTheme(m);
+  // Re-apply current theme colors
+  switchTheme(currentTheme);
+};
+
+if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
+})();
+</script>
+</body>
+</html>
